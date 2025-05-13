@@ -12,15 +12,14 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
 
+    @State private var text = ""
+    @State private var shouldShowAlert = false
+    
     var body: some View {
         NavigationSplitView {
             List {
                 ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+                    Text(item.text)
                 }
                 .onDelete(perform: deleteItems)
             }
@@ -29,19 +28,30 @@ struct ContentView: View {
                     EditButton()
                 }
                 ToolbarItem {
-                    Button(action: addItem) {
+                    Button {
+                        shouldShowAlert = true
+                    } label: {
                         Label("Add Item", systemImage: "plus")
                     }
                 }
+            }
+            .alert("Add New Item", isPresented: $shouldShowAlert) {
+                TextField("Enter text", text: $text)
+                Button("Add") {
+                    addItem(with: text)
+                }
+                .disabled(text.isEmpty)
+                
+                Button("Cancel", role: .cancel) {}
             }
         } detail: {
             Text("Select an item")
         }
     }
 
-    private func addItem() {
+    private func addItem(with text: String) {
         withAnimation {
-            let newItem = Item(timestamp: Date())
+            let newItem = Item(text: text, isDone: false)
             modelContext.insert(newItem)
         }
     }
